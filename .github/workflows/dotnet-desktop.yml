@@ -35,50 +35,35 @@
 # For more information on GitHub Actions, refer to https://github.com/features/actions
 # For a complete CI/CD sample to get started with GitHub Action workflows for Desktop Applications,
 # refer to https://github.com/microsoft/github-actions-for-desktop-apps
-name: .NET Desktop
+name: build and test
 
 on:
   push:
-    branches: [ "master" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ main ]
+
 
 jobs:
-  build:
+  build-and-test:
 
+    name: build-and-test
     runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@v3
-    - name: Setup .NET
+    - name: Setup .NET Core
       uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: '6.0'
-
-    - name: Restore dependencies
-      run: dotnet restore PercentageCalculations.sln
-
+      with: 
+         dotnet-version: 8.0.400
+       
+    - name: Install dependencies
+      run: dotnet restore
+      working-directory: ListLibrary
+      
     - name: Build
-      run: dotnet build PercentageCalculations.sln --no-restore
-
+      run: dotnet build --configuration Release --no-restore
+      working-directory: ListLibrary
+      
     - name: Test
-      run: dotnet test PercentageCalculations.sln --no-restore --logger:"trx;LogFileName=test_results.trx"
-    
-    - name: Upload Test Results
-      uses: actions/upload-artifact@v3
-      with:
-        name: test-results
-        path: TestResults
-
-    - name: Generate code coverage report
-      run: |
-        dotnet tool install --global dotnet-coverage
-        dotnet-coverage collect 'dotnet test PercentageCalculations.sln --no-build' -o coverage.info
-        dotnet tool install --global reportgenerator
-        reportgenerator -reports:coverage.info -targetdir:coveragereport -reporttypes:Html
-
-    - name: Upload coverage report
-      uses: actions/upload-artifact@v3
-      with:
-        name: coverage-report
-        path: coveragereport
+      run: dotnet test --no-restore --verbosity normal
+      working-directory: ListLibrary
